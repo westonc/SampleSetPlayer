@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test SampleSetPlayer.js</title>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<style> .prettyprint { white-space: pre; border: 1px dotted gray; padding: 4px; font-family: monospace; display: block; } </style> 
+	<link rel="stylesheet" type="text/css" href="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css"/>
+	<script src="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.js"></script>
+</head>
+<body onload="prettyPrint()">
+<div id="page">
+<h1>Test SampleSetPlayer.js</h1>
+<h2>What should happen:</h2>
+<p>When this page loads, you should hear a scale play twice.</p>
+
+<script src="SampleSetPlayer.js"></script>
+<script id="test">
+s = new SampleSetPlayer({patch: 'GiveMeASine', onload: test});
+
+function test() {
+	s.volume(0.7);
+	var scale = [60,62,64,65,67,69,71,72,
+				 60,62,64,65,67,69,71,72],
+		i=0;
+
+	function stepUp() {
+		if(i >= scale.length)
+			clearInterval(interval);
+		else {
+			s.trigger(scale[i]);
+			i++;
+		}
+	}
+
+	var interval = setInterval(stepUp,300);
+}
+</script>
+
+<!-- Everything below this is simply to display the test code above in the page-->
+<h2>Source:</h2>
+<script>
+var src = document.getElementById('test'),
+	display = document.createElement('code');
+display.className = 'prettyprint';
+display.innerHTML = src.innerHTML;
+document.body.appendChild(display);
+</script>
+
+</div>
+</body>
+</html>

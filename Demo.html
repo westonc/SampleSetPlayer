@@ -1,0 +1,178 @@
+<!doctype html>
+<html>
+<head>
+
+<title>SampleSetPlayer.js Demo</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<script src="SampleSetPlayer.js"></script>
+
+<style> 
+body {
+	background-color: white;
+	font-family: helvetica, serif;
+}
+
+#widget, #instructions {
+	float: left;
+}
+
+#widget {
+	margin-right: 1.5em;
+}
+
+#instructions {
+	max-width: 400px;
+}
+
+.matrix td {
+	background-color: #ccc;
+	width: 20px;
+	height: 20px;
+	border: 1px solid white;
+}
+
+.matrix td.on {
+	background-color: #ccf;
+}
+
+</style>
+
+</head>
+<body>
+<div id="page">
+<h1>Demo Using SampleSetPlayer.js</h1>
+
+<div id="widget">
+	<div id="matrixWrap">
+	</div>
+	<button id="play-pause">Play</button>
+</div>
+
+<div id="instructions">
+	Simple matrix-sequencer a la <a href="http://lab.andre-michelle.com/tonematrix">tone matrix</a>, without the fancy effects. Every "beat" the sequencer is playing, it evaluates a column of the above table and plays a tone for each cell of the column which is "active."
+	<p>Click on a square to activate it. Click "play" to begin making noise.</p>
+	<p>Requires an HTML5/Audio aware browser with JavaScript enabled.</p>
+	<p>I'm interested in feedback (@wwweston on twitter). It's probably about as non-glitchy as HTML5 Audio.</p>
+
+</div> <!-- /instructions -->
+
+</div> <!-- /page -->
+
+<script>
+											//Forward Declaration:
+	var BinaryMatrix = dfn_BinaryMatrix();	//Keeps up-front exposure to 
+											//abstraction innards low. :)
+
+	var 
+		scale =	[45,48,50,52,55, 			// 3 octaves pentatonic minor scale
+				 57,60,62,64,67,
+				 69,72,74,76,79,
+				 81].reverse(),				// reverse syncs visual high-first 
+											// convention with text's low-first
+
+		s = new SampleSetPlayer({			// The star of the show!
+			patch: 'GiveMeASine', 			
+			onload: setUpPlayBack, 
+			poly: scale.length
+		}),
+
+		bpm = 120,							// Some tempo settings
+		msPerHalfBeat = (60/bpm) * 500,
+		beatIndex = 0,
+		halfBeats = 16,
+
+		matrix = new BinaryMatrix({			// a thin abstraction over 
+			container: 'matrixWrap',		// a clickable on-off HTML table
+			rows: scale.length,
+			cols: halfBeats
+		}),
+
+		playing = false; 
+
+	function onHalfBeat() {					// playback fn executed by setInterval
+		var i=0;
+		for(var i=0, z=scale.length; i<z; i++) {
+			if(matrix.isOn(i,beatIndex))
+				s.trigger(scale[i]);
+		}
+		beatIndex = (beatIndex+1) % halfBeats;
+	}
+
+											// and here's where we connect the
+	function setUpPlayBack() {				// play/pause events to the button
+		$id('play-pause').onclick = function () {
+			if(!playing) {
+				playing = setInterval(onHalfBeat,msPerHalfBeat);
+				this.innerHTML = 'Pause';
+			} else {
+				clearInterval(playing);
+				playing = false;
+				this.innerHTML = 'Play';
+			}
+		};
+	}
+
+	/* ~~ What is the Matrix? ~~ 
+	Pretty much an HTML table where:
+		1) each td has an "on" or "off" state
+		2) each td is clickable to toggle state
+		3) we have a convenient method for fast-ish lookup of each td state
+	*/
+
+	function dfn_BinaryMatrix () {
+
+		function BinaryMatrix(args) { this.init(args); }
+
+		BinaryMatrix.tdClickFn = function () { 
+			this.className = (this.className == 'off') ? 'on' : 'off';
+		}
+
+		BinaryMatrix.prototype = {
+			init: function(args) {
+				this.container = $id(args.container);
+				this.rows = args.rows;
+				this.cols = args.cols;
+				this.buildMarkup();
+			},
+			buildMarkup: function() {
+				this.table = $cr8('table',{'class': 'matrix'});
+			
+				this.lookup = [];
+				var tbody = $cr8('tbody'),tr,td;
+				for(var i=0; i<this.rows; i++) {
+					this.lookup[i] = [];
+					tr = $cr8('tr');
+					for(j=0; j<this.cols; j++) {
+						td = $cr8('td',{'class': 'off'});
+						this.lookup[i][j] = td;
+						td.onclick = BinaryMatrix.tdClickFn;
+						tr.appendChild(td);
+					}
+					tbody.appendChild(tr);
+				}
+				this.table.appendChild(tbody);
+
+				if(this.container) {
+					this.container.innerHTML = '';
+					this.container.appendChild(this.table);
+				}
+			},
+			isOn: function(x,y) {
+				return (this.lookup[x][y].className == 'off') ? false : true;
+			}
+		}
+
+		return BinaryMatrix;
+	}
+
+	/* ~~ Small Shortcut Function Lib ~~ */
+
+	function $id(e) { return (e && e.nodeType) ? e : document.getElementById(e); }
+	function $attr(e,n,v) { return (typeof v == 'undefined') ? e.getAttribute(n) : (e.setAttribute(n,v) || v); }
+	function $attrs(e,as) { for(var p in as) $attr(e,p,as[p]); return e; }
+	function $cr8(t,as){return !as?document.createElement(t):$attrs($cr8(t),as);}
+
+</script>
+</div>
+</body>
+</html>

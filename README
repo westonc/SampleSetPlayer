@@ -1,0 +1,38 @@
+SAMPLE SET PLAYER .JS
+
+A JavaScript library for Audio-tag based programmatic sound.
+
+USAGE
+
+<script src="SampleSetPlayer.js"></script>
+
+// plays a scale
+s = new SampleSetPlayer({patch: 'GiveMeASine', onload: playScale});
+
+function playScale() {
+	s.volume(0.7);
+	var scale = [60,62,64,65,67,69,71,72],
+		i = 0,
+		interval = null;
+
+	function nextNote() {
+		if(i >= scale.length)
+			clearInterval(interval);
+		else {
+			s.trigger(scale[i]);
+			i++;
+		}
+	}
+	interval = setInterval(nextNote,300);
+}
+
+BACKGROUND
+
+Methods of *generating* audio programmatically are limited in the browser. The HTML5 Audio tag is apparently intended and suited for start-to-finish playback of finished media.  The Web Audio API is still experimental, and plugins such as Flash and Java are unsupported on many mobile devices (and increasingly eschewed on the desktop). 
+
+This is an experiment to see if the Audio tag can be repurposed as a Sample playback engine. It reads "Sample Sets" -- audio files containing all the notes of a scale (or other noises) for a given sound -- and maps MIDI note numbers to segments of this audio file. It uses multiple audio tags to provide a number of polyphonic voices, and provides a simple interface for triggering an individual MIDI note number. 
+
+Metadata indicating the formats a given Sample Set is availabe in (m4a/aac,mp3,ogg), the duration of a sample, and the first and last notes in the given scale is recorded in "meta.js" for each Sample Set (also called a "patch").
+
+The given Sample Set "Give Me A Sine" serves as an example in this project. 
+
